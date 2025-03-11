@@ -63,29 +63,34 @@ app.layout = html.Div(children=[html.H1('SpaceX Launch Records Dashboard',
                                 html.Div(dcc.Graph(id='success-payload-scatter-chart')),
                             ])
 
-# TASK 2 Callback: 根据发射场筛选数据并绘制发射成功率饼图
 # TASK 2 Callback: Pie chart for Success vs. Failure
 @app.callback(
     Output(component_id='success-pie-chart', component_property='figure'),
     Input(component_id='site-dropdown', component_property='value')
 )
 def get_pie_chart(entered_site):
+    # If 'ALL' sites are selected, use all rows in the dataframe
     if entered_site == 'ALL':
-        # 如果选择的是所有发射场，则显示所有发射的成功与失败统计
-        # If all sites are selected, create a pie chart for total launch success
         fig = px.pie(spacex_df, 
-                     values='class',  # 'class' 列表示发射成功（1）或失败（0）
-                     names='Launch Site',  # 以发射场名称为标签
-                     title='Total Launch Success Count')  # 总发射成功数量
+                     values='class',  # 'class' column indicates success (1) or failure (0)
+                     names='Launch Site',  # Names of the launch sites for the pie chart
+                     title='Total Launch Success Count')  # Pie chart title
     else:
-        # 如果选择的是某个特定发射场，则只显示该场的数据
-        # If a specific site is selected, filter the dataframe by the selected site
+        # If a specific site is selected, filter the dataframe to include only the selected site
         filtered_df = spacex_df[spacex_df['Launch Site'] == entered_site]
-        fig = px.pie(filtered_df, 
-                     values='class', 
-                     names=['Success', 'Failure'],  # 显示成功和失败的名称
-                     title=f'Success vs Failure for {entered_site}')  # 显示该发射场的成功与失败统计
+        
+        # Count successes (class=1) and failures (class=0) for the selected site
+        success_count = filtered_df[filtered_df['class'] == 1].shape[0]
+        failure_count = filtered_df[filtered_df['class'] == 0].shape[0]
+        
+        # Create pie chart for the selected site
+        fig = px.pie(values=[success_count, failure_count], 
+                     names=['Success', 'Failure'], 
+                     title=f'Success vs Failure for {entered_site}')
+    
     return fig
+
+
 
 # TASK 4 Callback: 根据选择的发射场和有效载荷范围筛选数据并绘制散点图
 # TASK 4 Callback: Scatter chart for Payload vs. Launch Success
